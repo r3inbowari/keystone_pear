@@ -1,0 +1,15 @@
+{
+    "id": "fa38c7e7-865d-4322-b693-d9f715857d2a",
+    "type": "pear",
+    "major": 1,
+    "minor": 5,
+    "patch": 0,
+    "ssid": "Xiaomi_D909",
+    "password": "12345678",
+    "update_host": "http://192.168.0.102:3000",
+    "tcp_host": "192.168.0.102:1030",
+    "prefix": "pear",
+    "node_password": "r3inbowari",
+    "mesh_ip": "192.168.4.22",
+    "wifi_mode": 0
+}
