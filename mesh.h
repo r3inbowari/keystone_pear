@@ -4,9 +4,9 @@
    @date 2020/6/21
 */
 
-#ifndef __NODE_H
-#define __NODE_H
+#ifndef __MESH_H
+#define __MESH_H
 #include <OneButton.h>
 extern OneButton btn;
-
+extern painlessMesh mesh;
 #endif

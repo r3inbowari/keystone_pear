@@ -8,8 +8,12 @@
     "password": "12345678",
     "update_host": "http://192.168.0.102:3000",
     "tcp_host": "192.168.0.102:1030",
-    "prefix": "pear",
-    "node_password": "r3inbowari",
-    "mesh_ip": "192.168.4.22",
-    "wifi_mode": 0
+    "mesh_prefix": "pear",
+    "mesh_password": "r3inbowari",
+    "mesh_port": 5555,
+    "wifi_mode": 0,
+    "mqtt_broker": "r3inbowari.top",
+    "mqtt_port": 1883,
+    "mqtt_username": "r3inb",
+    "mqtt_password": "159463"
 }

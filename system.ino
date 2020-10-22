@@ -27,8 +27,14 @@ void system_init() {
 
   Serial.print("SSID: ");
   Serial.println(config.ssid);
-  Serial.print("Node Prefix: ");
-  Serial.println(config.prefix);
+
+  Serial.print("Mesh Prefix: ");
+  Serial.println(config.mesh_prefix);
+  Serial.print("Mesh Port: ");
+  Serial.println(config.mesh_port);
+  Serial.print("Mesh Password: ");
+  Serial.println(config.mesh_password);
+
   Serial.print("TCP Host: ");
   Serial.println(config.tcp_host);
   Serial.print("Update Host: ");
@@ -37,6 +43,14 @@ void system_init() {
   Serial.print("WiFi Mode: ");
   Serial.println(config.wifi_mode);
 
+  Serial.print("MQTT Broker: ");
+  Serial.println(config.mqtt_broker);
+  Serial.print("MQTT Port: ");
+  Serial.println(config.mqtt_port);
+  Serial.print("MQTT Username: ");
+  Serial.println(config.mqtt_username);
+  Serial.print("MQTT Password: ");
+  Serial.println(config.mqtt_password);
   LogDivisionEnd("System Info");
 }
 

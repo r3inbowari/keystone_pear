@@ -19,7 +19,7 @@ void loadConfiguration(const char *filename, Config &config) {
   // Allocate a temporary JsonDocument
   // Don't forget to change the capacity to match your requirements.
   // Use arduinojson.org/v6/assistant to compute the capacity.
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<1024> doc;
 
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(doc, file);
@@ -32,16 +32,21 @@ void loadConfiguration(const char *filename, Config &config) {
   config.major = doc["major"] | 0;
   config.minor = doc["minor"] | 0;
   config.patch = doc["patch"] | 0;
-  config.ssid = doc["ssid"] | "null";
-  config.password = doc["password"] | "null";
+  config.ssid = doc["ssid"] | "";
+  config.password = doc["password"] | "";
   config.update_host = doc["update_host"] | "null";
   config.tcp_host = doc["tcp_host"] | "null";
 
-  config.prefix = doc["prefix"] | "null";
-  config.node_password = doc["node_password"] | "null";
+  config.mesh_prefix = doc["mesh_prefix"] | "null";
+  config.mesh_password = doc["mesh_password"] | "null";
+  config.mesh_port = doc["mesh_port"] | 5555;
 
-  config.mesh_ip = doc["mesh_ip"] | "null";
   config.wifi_mode = doc["wifi_mode"] | 0;
+
+  config.mqtt_broker = doc["mqtt_broker"] | "null";
+  config.mqtt_port = doc["mqtt_port"] | 1883;
+  config.mqtt_username = doc["mqtt_username"] | "null";
+  config.mqtt_password = doc["mqtt_password"] | "null";
   //  strlcpy(config.type,          // <- destination
   //  doc["type"] | "example.com",  // <- source
   //  sizeof(config.type));         // <- destination's capacity
@@ -60,7 +65,7 @@ void saveConfiguration(const char *filename, const Config &config) {
   } else {
     Serial.println("Delete failed");
   }
-  
+
   // Open file for writing
   File file = LittleFS.open(filename, "w");
   if (!file) {
@@ -71,7 +76,7 @@ void saveConfiguration(const char *filename, const Config &config) {
   // Allocate a temporary JsonDocument
   // Don't forget to change the capacity to match your requirements.
   // Use arduinojson.org/assistant to compute the capacity.
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<1024> doc;
 
   // Set the values in the document
   doc["id"] = config.id;
@@ -84,11 +89,16 @@ void saveConfiguration(const char *filename, const Config &config) {
   doc["update_host"] = config.update_host;
   doc["tcp_host"] = config.tcp_host;
 
-  doc["prefix"] = config.prefix;
-  doc["node_password"] = config.node_password;
-
-  doc["mesh_ip"] = config.mesh_ip;
+  doc["mesh_prefix"] = config.mesh_prefix;
+  doc["mesh_password"] = config.mesh_password;
+  doc["mesh_port"] = config.mesh_port;
+  
   doc["wifi_mode"] = config.wifi_mode;
+
+  doc["mqtt_broker"] = config.mqtt_broker;
+  doc["mesh_port"] = config.mesh_port;
+  doc["mqtt_username"] = config.mqtt_username;
+  doc["mqtt_password"] = config.mqtt_password;
   // Serialize JSON to file
   if (serializeJson(doc, file) == 0) {
     Serial.println(F("Failed to write to file"));

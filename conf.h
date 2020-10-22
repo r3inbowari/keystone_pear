@@ -16,10 +16,17 @@ extern struct Config {
   String password;
   String update_host;
   String tcp_host;
-  String prefix;
-  String node_password;
-  String mesh_ip;
+  
+  String mesh_prefix;
+  String mesh_password;
+  int mesh_port;
+  
   int wifi_mode;
+  
+  String mqtt_broker;
+  int mqtt_port;
+  String mqtt_username;
+  String mqtt_password;
 } config;
 
 extern const char *filename ;  // <- SD library uses 8.3 filenames

@@ -4,7 +4,6 @@
    @date 2020/6/24
 */
 #include "conf.h"
-#include <Hash.h>
 
 #define OS "esp8266"
 
