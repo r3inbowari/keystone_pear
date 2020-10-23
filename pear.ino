@@ -1,6 +1,6 @@
 #include <LittleFS.h>
 
-// I think this is because painlessMesh uses ArduinoJson too and this causes problems in the import order.
+// I think this is because painlessMesh uses ArduinoJson too and this causes problems in the import order. --chenhaibin 20200912
 // @see https://gitlab.com/painlessMesh/painlessMesh/-/issues/363
 #include "painlessMesh.h"
 #include "painlessmesh/layout.hpp"
@@ -12,19 +12,25 @@
 #include "mq.h"
 #include "ESPAsyncTCP.h"
 #include "SyncClient.h"
+#include "enum.h"
+#include "display.h"
 
 void setup() {
   system_init();
+
   // https://gitlab.com/painlessMesh/painlessMesh/-/wikis/api#painlessmeshstationmanual-string-ssid-string-password-uint16_t-port-uint8_t-remote_ip-
   // sta_init();
-  check_update(); // check update
 
-//   String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":0,\"ssid\":\"ZTE\",\"password\":\"panglixiao\",\"update_host\":\"http://192.168.0.102:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
-//   setConfig(conf.c_str());
 
-//  String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":0,\"ssid\":\"\",\"password\":\"\",\"update_host\":\"http://192.168.0.102:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
-//  setConfig(conf.c_str());
-  
+  // String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":8,\"ssid\":\"CU_Config\",\"password\":\"15946395951\",\"update_host\":\"http://r3inbowari.top:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
+  // setConfig(conf.c_str());
+
+  // String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":8,\"ssid\":\"ZTE\",\"password\":\"panglixiao\",\"update_host\":\"http://r3inbowari.top:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
+  // setConfig(conf.c_str());
+
+  // String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":0,\"ssid\":\"\",\"password\":\"\",\"update_host\":\"http://r3inbowari.top:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
+  // setConfig(conf.c_str());
+
   if (config.wifi_mode == 0) {
     // 0时开启AP
     ap_init();
@@ -37,6 +43,7 @@ void setup() {
 void loop() {
   http_update();
   node_update();
+  oled_update();
 }
 
 

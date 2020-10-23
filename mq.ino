@@ -16,7 +16,7 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
   String msg = String(cleanPayload);
 
   String targetStr = String(topic).substring(24);
-  Serial.println(targetStr);
+  Serial.println("[MQTT CALLBACK] topic: " + targetStr);
   StaticJsonDocument<200> doc;
 
   DeserializationError error = deserializeJson(doc, msg);
@@ -27,21 +27,52 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
   }
   free(cleanPayload);
 
-  String str = doc["str"];
-  Serial.println(str);
+  int operation = doc["operation"];
+  String id = doc["id"];
+  int member = doc["member"];
+
+  Serial.println("[MQTT CALLBACK] receive operation: " + String(operation));
+  if (targetStr == "coupler") {
+    if (operation == 0) {
+      digitalWrite(2, LOW);
+    } else if (operation == 1) {
+      digitalWrite(2, HIGH);
+    }
+  } else if (targetStr == "checkupdate") {
+    int remote_major = doc["major"];
+    int remote_minor = doc["minor"];
+    int remote_patch = doc["patch"];
+    setRemoteVersion(remote_major, remote_minor, remote_patch);
+    if (id == config.id) {
+      check_update();
+    } else if (id == "null" ) {
+      check_update_not_update();
+    }
+  }
 }
 
 String hash_id = sha1((String)ESP.getChipId());
 
 void subscribe_after_connect() {
-  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":0,\"data\":\"logon request\"}";
+  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
   mqttClient.publish("meshNetwork/from/rootNode/logon", payload.c_str());
   mqttClient.subscribe("meshNetwork/to/rootNode/#");
+  update_check();
+}
+
+void update_request() {
+  String payload = "{\"id\":\"" + config.id + "\",\"operation\":3,\"member\":0}";
+  mqttClient.publish("meshNetwork/from/rootNode/checkupdate", payload.c_str());
+}
+
+void update_check() {
+  String payload = "{\"id\":\"null\",\"operation\":3,\"member\":0}";
+  mqttClient.publish("meshNetwork/from/rootNode/checkupdate", payload.c_str());
 }
 
 void mqtt_init() {
   LogDivisionSta("MQTT INFO");
-  
+
   if (config.wifi_mode == 1) {
     Serial.print("Logon MQTT ClientID: ");
     Serial.println(hash_id);

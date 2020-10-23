@@ -1,7 +1,7 @@
 #include "mq.h"
 #include "mesh.h"
 #include "utils.h"
-#include "enum.h"
+#include "display.h"
 
 #define BUTTON_PIN 16 // button maping
 #define MESH_LED 14  //single click
@@ -9,7 +9,6 @@
 //#define   MESH_PREFIX     "whateverYouLike"
 //#define   MESH_PASSWORD   "somethingSneaky"
 //#define   MESH_PORT       5555
-
 
 Scheduler userScheduler;
 painlessMesh  mesh;
@@ -29,11 +28,155 @@ void sendMessage();
 bool rootNode = false;
 size_t rootId = 0;
 
+// WIFI网络状态图标锁定
+bool network_flag = false;
+
+// apds9960 定时任务
+Task taskAPDS( TASK_SECOND * 4 , TASK_FOREVER, &runAPDSGather );
+// apds轮播flag切换任务
+Task taskAPDSSwiper( TASK_SECOND * 9 , TASK_FOREVER, &runAPDSSwiper );
+
+// bme280 定时任务
+Task taskBME( TASK_SECOND * 3 , TASK_FOREVER, &runBMEGather );
+// bme280轮播flag切换任务
+Task taskBMESwiper( TASK_SECOND * 5 , TASK_FOREVER, &runBMESwiper );
 
 Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
 Task taskTimeSync( TASK_HOUR , TASK_FOREVER, &timeSync );
 Task taskTimeBroadcast( TASK_SECOND * 30 , TASK_FOREVER, &timeBroadcast );
-Task taskIRTest( TASK_SECOND * 25 , TASK_FOREVER, &runIRTest );
+Task taskIRTest( TASK_SECOND * 5 , TASK_FOREVER, &runIRTest );
+Task taskTimeDisplay( TASK_SECOND * 10 , TASK_FOREVER, &runTimeDisplay );
+
+Task taskWLANSearchDisplay( TASK_SECOND * 1 , TASK_FOREVER, &runWLANDisplay );
+
+Task taskLogon( TASK_MINUTE * 1 , TASK_FOREVER, &runLogon );
+
+void runLogon() {
+  onUpload();
+  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
+  mqttClient.publish("meshNetwork/from/rootNode/logon", payload.c_str());
+  onUpload();
+}
+
+void runWLANDisplay() {
+  static int wlan_step = 0;
+  if (wlan_step > 5) {
+    wlan_step = 0;
+  }
+  if (!network_flag) {
+    if (wlan_step == 0) {
+      menu_delItem(PIC_WIFI_SEARCH_2);
+      menu_addItem(PIC_WIFI_SEARCH_1);
+    } else if (wlan_step == 1) {
+      menu_delItem(PIC_WIFI_SEARCH_1);
+      menu_addItem(PIC_WIFI_SEARCH_2);
+    } else if (wlan_step == 2) {
+      menu_delItem(PIC_WIFI_SEARCH_2);
+      menu_addItem(PIC_WIFI_SEARCH_3);
+    } else if (wlan_step == 3) {
+      menu_delItem(PIC_WIFI_SEARCH_3);
+      menu_addItem(PIC_WIFI);
+    } else if (wlan_step == 4) {
+      menu_delItem(PIC_WIFI);
+      menu_addItem(PIC_WIFI_SEARCH_3);
+    } else if (wlan_step == 5) {
+      menu_delItem(PIC_WIFI_SEARCH_3);
+      menu_addItem(PIC_WIFI_SEARCH_2);
+    }
+  }
+  wlan_step ++;
+}
+
+void onUpload() {
+  static bool up_flag = false;
+  if (up_flag) {
+    menu_delItem(PIC_UPLOAD);
+  } else {
+    menu_addItem(PIC_UPLOAD);
+  }
+  up_flag = !up_flag;
+}
+
+void runTimeDisplay() {
+  Serial.println("[CRON] Time display");
+  time_t t = now();
+  int hh = (hour(t) + 8) % 24;
+  int mm = minute(t);
+  menu_timePrint(hh, mm);
+}
+
+void runBMEGather() {
+  Serial.printf("[CRON]");
+  bme_gather();
+  content_bme280();
+  // mqtt 发布
+  String dat = String(tem) + "," + String(hum) + "," + String(pre) + "," + String(alt);
+  auto ts = now();
+  INFOL("Send APDS From " + String(mesh.getNodeId()) + " to " + String(rootId));
+  String msg = "{\"id\":\"" + config.id + "\",\"mid\":\"" + mesh.getNodeId() + "\",\"ts\":" + ts + ",\"operation\":" + OP::SensorData + ",\"data\":{\"type\":2,\"measure\":[" + dat + "]}}";
+  Serial.println(msg);
+  if (ts > 1599900000) {
+    if (mesh.getNodeId() != rootId && rootId != 0) {
+      INFOH(" Done.");
+      mesh.sendSingle(rootId, msg);
+    } else {
+      // send to mqtt
+      INFOH(" Direct routing.");
+      onUpload();
+      mqttClient.publish("meshNetwork/from/rootNode/bme", msg.c_str());
+      onUpload();
+    }
+  } else {
+    INFOH(" Failed. Due to the unreachable network or The master device is not ready yet.");
+  }
+}
+
+void runBMESwiper() {
+  Serial.println("[CRON][BME] Swiper page index");
+  if (bme_swiper_index == BME_TAG::HP)
+    bme_swiper_index = BME_TAG::TA;
+  else
+    bme_swiper_index ++;
+  // 切换完毕后, 实时更新到OLED
+  content_bme280();
+}
+
+void runAPDSGather() {
+  Serial.printf("[CRON]");
+  apds_gather();
+  // 收集完毕后, 实时更新到OLED
+  content_apds9960();
+  // mqtt 发布
+  String dat = String(ambient_light) + "," + String(red_light) + "," + String(green_light) + "," + String(blue_light);
+  auto ts = now();
+  INFOL("Send APDS From " + String(mesh.getNodeId()) + " to " + String(rootId));
+  String msg = "{\"id\":\"" + config.id + "\",\"mid\":\"" + mesh.getNodeId() + "\",\"ts\":" + ts + ",\"operation\":" + OP::SensorData + ",\"data\":{\"type\":1,\"measure\":[" + dat + "]}}";
+  Serial.println(msg);
+  if (ts > 1599900000) {
+    if (mesh.getNodeId() != rootId && rootId != 0) {
+      INFOH(" Done.");
+      mesh.sendSingle(rootId, msg);
+    } else {
+      // send to mqtt
+      INFOH(" Direct routing.");
+      onUpload();
+      mqttClient.publish("meshNetwork/from/rootNode/apds", msg.c_str());
+      onUpload();
+    }
+  } else {
+    INFOH(" Failed. Due to the unreachable network or The master device is not ready yet.");
+  }
+}
+
+void runAPDSSwiper() {
+  Serial.println("[CRON][APDS] Swiper page index");
+  if (apds_swiper_index == APDS_TAG::Blue)
+    apds_swiper_index = APDS_TAG::Clear;
+  else
+    apds_swiper_index ++;
+  // 切换完毕后, 实时更新到OLED
+  content_apds9960();
+}
 
 void runIRTest() {
   auto ts = now();
@@ -66,9 +209,21 @@ void sendMessage() {
 void timeSync() {
   auto unixTime = ntpUnixTime(udp);
   if (unixTime > 0) {
+    if (!network_flag) {
+      taskWLANSearchDisplay.disable();
+      menu_delItem(PIC_WIFI_SEARCH_1);
+      menu_delItem(PIC_WIFI_SEARCH_2);
+      menu_delItem(PIC_WIFI_SEARCH_3);
+      menu_delItem(PIC_WIFI);
+      menu_addItem(PIC_WIFI);
+      menu_addItem(PIC_LTE);
+      network_flag = true;
+    }
     INFOL("Sync timebase to ");
     INFOH(String(unixTime));
     setTime(unixTime);
+    INFOH("Enable time display option");
+    taskTimeDisplay.enable();
   }
 }
 
@@ -175,7 +330,8 @@ static void handleClick() {
 */
 void node_init() {
   LogDivisionSta("Mesh Mode");
-
+  Serial.println("GPIO14 -> LED2 ON");
+  digitalWrite(14, LOW);
   // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
 
@@ -202,9 +358,22 @@ void node_init() {
   userScheduler.addTask( taskSendMessage );
   userScheduler.addTask( taskTimeBroadcast );
   userScheduler.addTask( taskIRTest );
+  userScheduler.addTask( taskBME );
+  userScheduler.addTask( taskBMESwiper );
+  userScheduler.addTask( taskAPDS );
+  userScheduler.addTask( taskAPDSSwiper );
+  userScheduler.addTask( taskTimeDisplay );
+  userScheduler.addTask( taskWLANSearchDisplay );
+  userScheduler.addTask( taskLogon );
 
+  taskLogon.enable();
+  taskWLANSearchDisplay.enable();
+  taskBME.enable();
+  taskBMESwiper.enable();
   taskSendMessage.enable();
   taskIRTest.enable();
+  taskAPDS.enable();
+  taskAPDSSwiper.enable();
 
   // rootNode Redefine: when the first apNode link to router
   if (config.ssid != "" && config.password != "") {

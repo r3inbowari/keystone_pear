@@ -8,8 +8,6 @@ uint16_t blue_light = 0;
 
 void init_apds() {
   // Initialize Serial port
-  Serial.begin(9600);
-  Serial.println();
   Serial.println(F("--------------------------------"));
   Serial.println(F("SparkFun APDS-9960 - ColorSensor"));
   Serial.println(F("--------------------------------"));
@@ -27,7 +25,7 @@ void init_apds() {
   } else {
     Serial.println(F("Something went wrong during light sensor init!"));
   }
-
+  Serial.println(F("[APDS] Open scheduler"));
   // Wait for initialization and calibration to finish
   delay(500);
 }
@@ -39,7 +37,7 @@ void apds_gather() {
         !apds.readBlueLight(blue_light) ) {
     Serial.println("Error reading light values");
   } else {
-    Serial.print("[APDS]");
+    Serial.print("[APDS] ");
     Serial.print("Ambient: ");
     Serial.print(ambient_light);
     Serial.print(" Red: ");
