@@ -41,6 +41,11 @@ Task taskBME( TASK_SECOND * 3 , TASK_FOREVER, &runBMEGather );
 // bme280轮播flag切换任务
 Task taskBMESwiper( TASK_SECOND * 5 , TASK_FOREVER, &runBMESwiper );
 
+// ccs811 定时任务
+Task taskCCS( TASK_SECOND * 4 , TASK_FOREVER, &runCSSGather );
+// ccs811轮播flag切换任务 合并到第一行上, 即bme swiper
+// Task taskBMESwiper( TASK_SECOND * 5 , TASK_FOREVER, &runBMESwiper );
+
 Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
 Task taskTimeSync( TASK_HOUR , TASK_FOREVER, &timeSync );
 Task taskTimeBroadcast( TASK_SECOND * 30 , TASK_FOREVER, &timeBroadcast );
@@ -105,6 +110,32 @@ void runTimeDisplay() {
   menu_timePrint(hh, mm);
 }
 
+void runCSSGather() {
+  Serial.printf("[CRON]");
+  ccs_gather();
+  content_bme280(); // 寄生
+  // mqtt 发布
+  String dat = String(co2) + "," + String(tvoc);
+  auto ts = now();
+  INFOL("Send APDS From " + String(mesh.getNodeId()) + " to " + String(rootId));
+  String msg = "{\"id\":\"" + config.id + "\",\"mid\":\"" + mesh.getNodeId() + "\",\"ts\":" + ts + ",\"operation\":" + OP::SensorData + ",\"data\":{\"type\":3,\"measure\":[" + dat + "]}}";
+  Serial.println(msg);
+  if (ts > 1599900000) {
+    if (mesh.getNodeId() != rootId && rootId != 0) {
+      INFOH(" Done.");
+      mesh.sendSingle(rootId, msg);
+    } else {
+      // send to mqtt
+      INFOH(" Direct routing.");
+      onUpload();
+      mqttClient.publish("meshNetwork/from/rootNode/ccs", msg.c_str());
+      onUpload();
+    }
+  } else {
+    INFOH(" Failed. Due to the unreachable network or The master device is not ready yet.");
+  }
+}
+
 void runBMEGather() {
   Serial.printf("[CRON]");
   bme_gather();
@@ -133,7 +164,7 @@ void runBMEGather() {
 
 void runBMESwiper() {
   Serial.println("[CRON][BME] Swiper page index");
-  if (bme_swiper_index == BME_TAG::HP)
+  if (bme_swiper_index == BME_TAG::CV)
     bme_swiper_index = BME_TAG::TA;
   else
     bme_swiper_index ++;
@@ -331,7 +362,7 @@ static void handleClick() {
 void node_init() {
   LogDivisionSta("Mesh Mode");
   Serial.println("GPIO14 -> LED2 ON");
-  digitalWrite(14, LOW);
+  analogWrite(14, 100);
   // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
 
@@ -365,16 +396,22 @@ void node_init() {
   userScheduler.addTask( taskTimeDisplay );
   userScheduler.addTask( taskWLANSearchDisplay );
   userScheduler.addTask( taskLogon );
+  userScheduler.addTask( taskCCS );
 
   taskLogon.enable();
   taskWLANSearchDisplay.enable();
-  taskBME.enable();
-  taskBMESwiper.enable();
   taskSendMessage.enable();
-  taskIRTest.enable();
+  
+  taskBME.enable();
   taskAPDS.enable();
+  taskCCS.enable();
+  Serial.println(F("[APDS] Open scheduler"));
+  Serial.println(F("[CSS] Open scheduler"));
+  Serial.println(F("[BME] Open scheduler"));
   taskAPDSSwiper.enable();
+  taskBMESwiper.enable();
 
+  taskIRTest.enable();
   // rootNode Redefine: when the first apNode link to router
   if (config.ssid != "" && config.password != "") {
     // this node will become the top of all nodes
@@ -395,7 +432,18 @@ void node_init() {
    loop routine
 */
 void node_update() {
+  static int mesh_led_level = 100;
+  static int enter_count = 0;
   btn.tick();
+  enter_count ++;
+  if (enter_count == 10) {
+    analogWrite(14, mesh_led_level++);
+    enter_count = 0;
+  }
+  if (mesh_led_level == 1025) {
+    mesh_led_level = 100;
+  }
+
   if (config.wifi_mode == 1) {
     // timebase polling
     if (now() < 1599900000 && rootNode) {

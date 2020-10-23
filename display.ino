@@ -191,6 +191,15 @@ void content_bme280() {
         u8g2.sendBuffer();
       }
       break;
+    case BME_TAG::CV:
+      {
+        u8g2.setCursor(5, 38);
+        u8g2.print("CV " + String(co2) + String("ppm"));
+        u8g2.setCursor(70, 38);
+        u8g2.print(String("lv.") + tvoc);
+        u8g2.sendBuffer();
+      }
+      break;
   }
 }
 

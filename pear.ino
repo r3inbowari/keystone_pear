@@ -22,6 +22,9 @@ void setup() {
   // sta_init();
 
 
+//   String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":8,\"ssid\":\"CU_Config\",\"password\":\"15946395951\",\"update_host\":\"http://r3inbowari.top:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
+//   setConfig(conf.c_str());
+  
   // String conf = "{\"id\":\"fa38c7e7-865d-4322-b693-d9f715857d2a\",\"type\":\"pear\",\"major\":1,\"minor\":5,\"patch\":8,\"ssid\":\"dongyajing\",\"password\":\"999999999\",\"update_host\":\"http://r3inbowari.top:3000\",\"tcp_host\":\"192.168.0.102:1030\",\"mesh_prefix\":\"pear\",\"mesh_password\":\"r3inbowari\",\"mesh_port\":5555,\"wifi_mode\":0,\"mqtt_broker\":\"r3inbowari.top\",\"mqtt_port\":1883,\"mqtt_username\":\"r3inb\",\"mqtt_password\":\"159463\"}";
   // setConfig(conf.c_str());
 

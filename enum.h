@@ -21,4 +21,5 @@ enum APDS_TAG {
 enum BME_TAG {
   TA, // 温度, 高度
   HP, // 湿度, 压强
+  CV, // 二氧化碳, 空气质量
 };

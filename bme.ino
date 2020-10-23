@@ -9,17 +9,15 @@ float tem = 0;
 Adafruit_BME280 bme;
 
 void init_bme() {
-  // Wire.begin();
-
-  Serial.println(F("BME280 test"));
+  Serial.println(F("--------------------------------"));
+  Serial.println(F("SparkFun BME-280 - HATPSensor"));
+  Serial.println(F("--------------------------------"));
   if (! bme.begin(0x76, &Wire)) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1);
   }
-  Serial.println("-- Default Test --");
-  Serial.println("normal mode, 16x oversampling for all, filter off,");
-  Serial.println("0.5ms standby period");
-  Serial.println();
+  Serial.println(F("BME sensor is now running"));
+  Serial.println(F("--------------------------------"));
 }
 
 void bme_gather() {
