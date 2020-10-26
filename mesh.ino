@@ -58,7 +58,8 @@ Task taskLogon( TASK_MINUTE * 1 , TASK_FOREVER, &runLogon );
 
 void runLogon() {
   onUpload();
-  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
+  // String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
+  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":12,\"data\":\"heartbeat\",\"ssid\":\"" + config.ssid + "\",\"prefix\":\"" + config.mesh_prefix + "\",\"mode\":" + config.wifi_mode + ",\"broker\":\"" + config.wifi_mode + "\",\"username\":\"" + config.mqtt_username + "\",\"major\":" + config.major + ",\"minor\":" + config.minor + ",\"patch\":" + config.patch + ",\"ts\":" + now() + "}";
   mqttClient.publish("meshNetwork/from/rootNode/logon", payload.c_str());
   onUpload();
 }
@@ -365,9 +366,9 @@ void node_init() {
   analogWrite(14, 100);
   // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
-
+Serial.println("Fggggggggggggggggggggggggggggggg");
   mesh.init( config.mesh_prefix, config.mesh_password, &userScheduler, config.mesh_port );
-
+  
   if (config.ssid != "" && config.password != "") {
     Serial.println("Found STA configuration and switch to master device.");
     mesh.stationManual(config.ssid, config.password);

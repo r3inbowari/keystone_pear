@@ -17,7 +17,7 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
 
   String targetStr = String(topic).substring(24);
   Serial.println("[MQTT CALLBACK] topic: " + targetStr);
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<300> doc;
 
   DeserializationError error = deserializeJson(doc, msg);
   if (error) {
@@ -60,7 +60,9 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
 String hash_id = sha1((String)ESP.getChipId());
 
 void subscribe_after_connect() {
-  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
+  // String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":" + OP::LogonRequest + ",\"data\":\"logon request\"}";
+  String payload = "{\"id\":\"" + config.id + "\",\"code\":0,\"operation\":12,\"data\":\"heartbeat\",\"ssid\":\"" + config.ssid + "\",\"prefix\":\"" + config.mesh_prefix + "\",\"mode\":" + config.wifi_mode + ",\"broker\":\"" + config.wifi_mode + "\",\"username\":\"" + config.mqtt_username + "\",\"major\":" + config.major + ",\"minor\":" + config.minor + ",\"patch\":" + config.patch + ",\"ts\":" + now() + "}";
+
   mqttClient.publish("meshNetwork/from/rootNode/logon", payload.c_str());
   mqttClient.subscribe("meshNetwork/to/rootNode/#");
   update_check();

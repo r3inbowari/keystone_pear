@@ -164,6 +164,7 @@ void ap_init() {
   Serial.print("AP IP address: ");
   Serial.println(myIP);
   server.on("/", handleRoot);
+  server.on("/changeWlan", handleWlan);
   server.begin();
   Serial.println("HTTP server started");
   LogDivisionEnd("AP Mode");
@@ -175,4 +176,25 @@ void http_update() {
 
 void handleRoot() {
   server.send(200, "text/plain", "It is a RESTful Web created by ESP8266");
+}
+
+/**
+   WLAN修改
+   @rest ip:port/changeWlan?ssid=[ssid]&password=[password]
+*/
+void handleWlan() {
+  if (server.hasArg("ssid") && server.hasArg("password")) {
+    String arg0 = server.arg("ssid");
+    String arg1 = server.arg("password");
+    server.send(200, "text/plain", "wlan params: " + arg0 + ", " + arg1);
+    config.ssid = arg0;
+    config.password = arg1;
+    Serial.println("WLAN configuration has been change.");
+    Serial.println("Saving configuration now.");
+    saveConfiguration("config.json", config);
+    Serial.println("ESP8266 will restart to apply the new setting.");
+    ESP.restart();
+  } else {
+    server.send(200, "text/plain", "error or less query params.");
+  }
 }
