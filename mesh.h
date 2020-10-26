@@ -9,4 +9,7 @@
 #include <OneButton.h>
 extern OneButton btn;
 extern painlessMesh mesh;
+
+void node_init();
+
 #endif

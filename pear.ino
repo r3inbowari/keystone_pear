@@ -14,6 +14,7 @@
 #include "SyncClient.h"
 #include "enum.h"
 #include "display.h"
+#include "system_0x16.h"
 
 void setup() {
   system_init();

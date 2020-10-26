@@ -32,10 +32,10 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
   int member = doc["member"];
 
   Serial.println("[MQTT CALLBACK] receive operation: " + String(operation));
-  if (targetStr == "coupler") {
-    if (operation == 0) {
+  if (targetStr == "led") {
+    if (operation == OP::LEDTurnOff) {
       digitalWrite(2, LOW);
-    } else if (operation == 1) {
+    } else if (operation == OP::LEDTurnOff) {
       digitalWrite(2, HIGH);
     }
   } else if (targetStr == "checkupdate") {
@@ -47,6 +47,12 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
       check_update();
     } else if (id == "null" ) {
       check_update_not_update();
+    }
+  } else if (id == config.id && targetStr == "coupler") {
+    if (operation == OP::CouplerTurnOff) {
+      turn_off_coupler(member);
+    } else if (operation == OP::CouplerTurnOn) {
+      turn_on_coupler(member);
     }
   }
 }

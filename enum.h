@@ -3,7 +3,11 @@ enum OP {
   RootNodeBoardcast, // 根节点广播
   SensorData,        // 传感器数据类型
   NetworkTopology,
-  LogonRequest // 根节点登录请求
+  LogonRequest, // 根节点登录请求
+  CouplerTurnOff, // 耦合器关闭
+  CouplerTurnOn, // 耦合器开启
+  LEDTurnOff,
+  LEDTurnOn,
 };
 
 enum MODE {

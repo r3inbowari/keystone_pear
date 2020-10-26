@@ -401,7 +401,7 @@ void node_init() {
   taskLogon.enable();
   taskWLANSearchDisplay.enable();
   taskSendMessage.enable();
-  
+
   taskBME.enable();
   taskAPDS.enable();
   taskCCS.enable();
@@ -432,16 +432,24 @@ void node_init() {
    loop routine
 */
 void node_update() {
-  static int mesh_led_level = 100;
+  static int mesh_led_level = 200;
   static int enter_count = 0;
+  static bool vector = true; // ↑
+
   btn.tick();
   enter_count ++;
   if (enter_count == 10) {
-    analogWrite(14, mesh_led_level++);
     enter_count = 0;
+    if (vector) {
+      analogWrite(14, mesh_led_level++);
+    } else {
+      analogWrite(14, mesh_led_level--);
+    }
   }
   if (mesh_led_level == 1025) {
-    mesh_led_level = 100;
+    vector = false;
+  } else if (mesh_led_level == 200) {
+    vector = true;
   }
 
   if (config.wifi_mode == 1) {
@@ -455,6 +463,7 @@ void node_update() {
     }
     mesh.update();
   }
+
 }
 
 void time_loop() {
