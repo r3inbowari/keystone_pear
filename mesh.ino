@@ -97,8 +97,10 @@ void onUpload() {
   static bool up_flag = false;
   if (up_flag) {
     menu_delItem(PIC_UPLOAD);
+    digitalWrite(2, HIGH);
   } else {
     menu_addItem(PIC_UPLOAD);
+    digitalWrite(2, LOW);
   }
   up_flag = !up_flag;
 }
