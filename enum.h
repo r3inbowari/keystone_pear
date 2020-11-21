@@ -8,6 +8,7 @@ enum OP {
   CouplerTurnOn, // 耦合器开启
   LEDTurnOff,
   LEDTurnOn,
+  NodeList,
 };
 
 enum MODE {

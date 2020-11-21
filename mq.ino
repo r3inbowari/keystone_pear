@@ -48,11 +48,24 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
     } else if (id == "null" ) {
       check_update_not_update();
     }
-  } else if (id == config.id && targetStr == "coupler") {
-    if (operation == OP::CouplerTurnOff) {
-      turn_off_coupler(member);
-    } else if (operation == OP::CouplerTurnOn) {
-      turn_on_coupler(member);
+  } else if (targetStr == "coupler") {
+    if (id == config.id) {
+      if (operation == OP::CouplerTurnOff) {
+        turn_off_coupler(member);
+      } else if (operation == OP::CouplerTurnOn) {
+        turn_on_coupler(member);
+      }
+    } else {
+      auto ts = now();
+      if (operation == OP::CouplerTurnOff) {
+        auto payload = "{\"id\":\"" + id + "\",\"mid\":\"" + mesh.getNodeId() + "\",\"ts\":" + now() + ",\"operation\":" + OP::CouplerTurnOff + ",\"data\":\"" + String(member) + "\"}";
+        Serial.println(payload);
+        mesh.sendBroadcast(payload, false);
+      } else if (operation == OP::CouplerTurnOn) {
+        auto payload = "{\"id\":\"" + id + "\",\"mid\":\"" + mesh.getNodeId() + "\",\"ts\":" + now() + ",\"operation\":" + OP::CouplerTurnOn + ",\"data\":\"" + String(member) + "\"}";
+        Serial.println(payload);
+        mesh.sendBroadcast(payload, false);
+      }
     }
   }
 }
